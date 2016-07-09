@@ -245,11 +245,6 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 	protected $sleeping = null;
 	protected $clientID = null;
 	
-	//Assume client is desktop until told otherwise. This won't affect PE and helps W10
-	//Crafting events and container slot changes help us decide whether the client is a desktop client or not.
-	//Okay, apparently this causes PE to lose stuff put into chests until they craft something. Argh!
-	protected $isDesktopClient = true;
-	
 	private $loaderId = null;
 
 	protected $stepHeight = 0.6;
@@ -808,10 +803,6 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 	 */
 	public function getPort() : int{
 		return $this->port;
-	}
-	
-	public function isDesktop(): bool{
-		return $this->isDesktopClient;
 	}
 
 	public function getNextPosition(){
@@ -3306,6 +3297,8 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$this->craftingInventory->remove($droppedItem);
 					$replacementItem = null;					
 				}else{
+					//Something fails under here, breaking item drops on PE -_-
+					
 					//Crafting inventory doesn't contain the item we are trying to drop
 					//This means we're trying to drop our held item slot, or at least part
 					//of it.
@@ -3441,10 +3434,10 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				
 				//Tells the server whether to add the resulting item to the inventory directly.
 				// We do not want to do this with Desktop GUI as this might result in duplication.
-				//$isDesktopCrafting = false;
+				$isDesktopCrafting = false;
 				
 				if(count($packet->input) === 0){
-					$this->isDesktopClient = true;
+					$isDesktopCrafting = true;
 					/* If the packet "input" field is empty this needs to be handled differently.
 					 * "input" is used to tell the server what items to remove from the client's inventory
 					 * Because crafting takes the materials in the crafting grid, nothing needs to be taken from the inventory
@@ -3480,7 +3473,6 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 						}
 					}
 				}else{
-					$this->isDesktopClient = false;
 					if($recipe instanceof ShapedRecipe){
 						for($x = 0; $x < 3 and $canCraft; ++$x){
 							for($y = 0; $y < 3; ++$y){
@@ -3580,7 +3572,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				}
 
 				//Only do this if the crafting was not desktop style
-				if(!$this->isDesktopClient){
+				if(!$isDesktopCrafting){
 					foreach($used as $slot => $count){
 						if($count === 0){
 							continue;
@@ -3716,13 +3708,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 
 				$this->currentTransaction->addTransaction($transaction);
 				
-				if(count($this->currentTransaction->getTransactions()) > 1){
-					//Win10 can't make more than 1 inventory transaction at a time.
-					//If we get more than 1, this must be PE (adding items to a chest for example)
-					$this->isDesktopClient = false;
-				}
-				
-				if($this->currentTransaction->canExecute() or $this->isDesktopClient){
+				if($this->currentTransaction->canExecute()){
 					$achievements = [];
 					foreach($this->currentTransaction->getTransactions() as $ts){
 						$inv = $ts->getInventory();

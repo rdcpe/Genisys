@@ -99,6 +99,7 @@ class SimpleTransactionGroup implements TransactionGroup{
 			$checkSourceItem = $ts->getInventory()->getItem($ts->getSlot());
 			$sourceItem = $ts->getSourceItem();
 			if(!$checkSourceItem->deepEquals($sourceItem, true, false) or $sourceItem->getCount() !== $checkSourceItem->getCount()){
+				//I believe this may be the cause of a large number of inventory bugs.
 				return false;
 			}
 			if($sourceItem->getId() !== Item::AIR){
@@ -127,14 +128,14 @@ class SimpleTransactionGroup implements TransactionGroup{
 	}
 
 	public function canExecute(){
-		$haveItems = [];
-		$needItems = [];
+		/*$haveItems = [];
+		$needItems = [];*/
 
-		return $this->matchItems($haveItems, $needItems) and count($haveItems) === 0 and count($needItems) === 0 and count($this->transactions) > 0;
+		return /*$this->matchItems($haveItems, $needItems) and count($haveItems) === 0 and count($needItems) === 0 and*/ count($this->transactions) > 0;
 	}
 
 	public function execute(){
-		if($this->hasExecuted() or (!$this->canExecute() and !$this->source->isDesktop())){
+		if($this->hasExecuted() or !$this->canExecute()){
 			return false;
 		}
 
@@ -151,13 +152,9 @@ class SimpleTransactionGroup implements TransactionGroup{
 		}
 
 		foreach($this->transactions as $transaction){
-			if($this->source->isDesktop()){
-				echo "Handling desktop inventory change\n";
-				$this->source->handleInventoryChange($transaction->getInventory(), $transaction->getSlot(), $transaction->getTargetItem(), $transaction->getSourceItem());
-			}else{
-				echo "Handling PE inventory change\n";
-				$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
-			}
+			$this->source->handleInventoryChange($transaction->getInventory(), $transaction->getSlot(), $transaction->getTargetItem(), $transaction->getSourceItem());
+			//echo "Handling PE inventory change\n";
+			//$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
 			
 		}
 
