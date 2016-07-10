@@ -3293,6 +3293,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				if($this->craftingInventory->contains($packet->item)){
 					//We're okay to go ahead and drop as Desktop GUI style
 					//We're dropping an item that we've clicked on and picked up.
+					echo "Dropped an item from the crafting inventory\n";
 					$droppedItem = $packet->item;
 					$this->craftingInventory->remove($droppedItem);
 					$replacementItem = null;					
@@ -3306,6 +3307,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					if(!$heldItem->deepEquals($packet->item)){
 						//Should be impossible
 						//Player tried to drop something that wasn't the same as their held item
+						//STUPID: you can do this on PE. *facepalm*
+						echo "Player attempted to drop a wrong item\n";
+						$this->inventory->sendContents($this);
 						break;
 					}elseif($heldItem->getCount() !== $packet->item->getCount()){
 						//Player is trying to drop part of a slot
@@ -3313,19 +3317,25 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 						if($remaining < 0){
 							//Again, should be impossible
 							//Client trying to drop more of an item than they are holding
+							echo "Player attempted to drop more of an item than they have\n";
+							$this->inventory->sendContents($this);
 							break;
 						}else{
+							echo "Player dropping part of a held slot\n";
 							$heldItem->setCount($remaining);
 							$droppedItem = $packet->item;
 							$replacementItem = $heldItem;
 						}
 					}else{
 						//Dropping the entire held slot
+						echo "Dropping a whole held slot\n";
 						$droppedItem = $heldItem;
 					}
 				}
 				if($droppedItem === null){
 					//No idea when or why this would ever happen, but okay...
+					echo "Dropped item was null, breaking\n";
+					$this->inventory->sendContents($this);
 					break;
 				}
 				$ev = new PlayerDropItemEvent($this, $droppedItem);	
@@ -3906,7 +3916,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 	 * @param bool   $notify
 	 */
 	public final function close($message = "", $reason = "generic reason", $notify = true){
-
+		foreach($this->getCraftingInventory()->getContents() as $craftingItem){
+			$this->level->dropItem($this, $craftingItem);
+		}
 		if($this->connected and !$this->closed){
 			if($notify and strlen((string) $reason) > 0){
 				$pk = new DisconnectPacket;

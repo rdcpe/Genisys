@@ -163,6 +163,9 @@ class SimpleTransactionGroup implements TransactionGroup{
 							//Allows duplication and crafting with nonexistent items in creative
 							$this->getSource()->getCraftingInventory()->removeItem($change["in"]);
 						}
+					}else{
+						//Illegal transaction
+						continue;
 					}
 				}
 				if($change["out"] instanceof Item){
@@ -174,8 +177,10 @@ class SimpleTransactionGroup implements TransactionGroup{
 							//Allows duplication and crafting with nonexistent items in creative
 							$this->getSource()->getCraftingInventory()->addItem($change["out"]);
 						}
+					}else{
+						//Illegal transaction
+						continue;
 					}
-					
 				}
 				//Set the item in the target slot at the end
 				$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
