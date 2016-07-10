@@ -150,9 +150,40 @@ class SimpleTransactionGroup implements TransactionGroup{
 
 			return false;
 		}
-
+		
 		foreach($this->transactions as $transaction){
-			$this->source->handleInventoryChange($transaction->getInventory(), $transaction->getSlot(), $transaction->getTargetItem(), $transaction->getSourceItem());
+			$change = $transaction->getChange();
+			if($change !== null){
+				//Some change has taken place, handle it
+				if($change["in"] instanceof Item){
+					//Added items to the inventory
+					if($this->getSource()->getCraftingInventory()->contains($change["in"]) or $this->getSource()->isCreative()){
+					
+						if($this->getSource()->getCraftingInventory()->contains($change["in"])){
+							//Allows duplication and crafting with nonexistent items in creative
+							$this->getSource()->getCraftingInventory()->removeItem($change["in"]);
+						}
+					}
+				}
+				if($change["out"] instanceof Item){
+					//Taken items out of the inventory
+					//Check if the target slot contains the item we are taking out
+					if($transaction->getInventory()->slotContains($transaction->getSlot(), $change["out"]) or $this->getSource()->isCreative()){
+						
+						if($this->getSource()->getCraftingInventory()->canAddItem($change["out"])){
+							//Allows duplication and crafting with nonexistent items in creative
+							$this->getSource()->getCraftingInventory()->addItem($change["out"]);
+						}
+					}
+					
+				}
+				//Set the item in the target slot at the end
+				$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
+			}
+			
+
+			
+			//$this->source->handleInventoryChange($transaction->getInventory(), $transaction->getSlot(), $transaction->getTargetItem(), $transaction->getSourceItem());
 			//echo "Handling PE inventory change\n";
 			//$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
 			

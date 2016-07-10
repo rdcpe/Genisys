@@ -2127,7 +2127,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 			$this->inventory->sendContents($this);
 		}
 		if($newItem != $oldItem and count($this->windowIndex) > 0){ 
-			//Some inventory change has taken place, handle it, but only if there are windows open. Fixes problems with picking items up
+			//Some inventory change has taken place, handle it, but only if there are windows open. -Fixes problems with picking items up- nope
 			if($newItem->getId() === Item::AIR and $oldItem->getId() !== Item::AIR){ //Selected a whole slot
 				$this->craftingInventory->addItem($oldItem);
 				$inventory->clear($slot);

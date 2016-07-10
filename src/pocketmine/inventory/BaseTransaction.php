@@ -87,10 +87,10 @@ class BaseTransaction implements Transaction{
 			
 			if($countDiff < 0){	//Count decreased
 				return ["in" => null,
-						"out" => clone $this->sourceItem->setCount(-$countDiff)]; //Negative negative = positive
+						"out" => (clone $this->sourceItem)->setCount(-$countDiff)]; //Negative negative = positive
 			}elseif($countDiff > 0){ //Count increased
 				return [
-						"in" => clone $this->sourceItem->setCount($countDiff),
+						"in" => (clone $this->sourceItem)->setCount($countDiff),
 						"out" => null];
 			}else{
 				//Should be impossible (identical items and no count change)
@@ -99,7 +99,7 @@ class BaseTransaction implements Transaction{
 				return null; 
 			}
 		}elseif($this->sourceItem->getId() !== Item::AIR and $this->targetItem->getId() === Item::AIR){
-			//Slot emptied. Change is equivalent to the source item with a negative count (subtract that number of items)
+			//Slot emptied
 			//return the item removed
 			return ["in" => null,
 					"out" => clone $this->sourceItem];
