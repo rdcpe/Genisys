@@ -69,6 +69,14 @@ class BaseTransaction implements Transaction{
 		return clone $this->targetItem;
 	}
 	
+	public function setSourceItem(Item $item){
+		$this->sourceItem = clone $item;
+	}
+	
+	public function setTargetItem(Item $item){
+		$this->targetItem = clone $item;
+	}
+	
 	/**
 	 * Returns the change in inventory resulting from this transaction
 	 * @return Item[
