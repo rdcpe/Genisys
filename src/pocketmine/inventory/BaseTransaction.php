@@ -34,6 +34,8 @@ class BaseTransaction implements Transaction{
 	protected $targetItem;
 	/** @var float */
 	protected $creationTime;
+	/** @var int */
+	protected $failures = 0;
 
 	/**
 	 * @param Inventory $inventory
@@ -75,6 +77,14 @@ class BaseTransaction implements Transaction{
 	
 	public function setTargetItem(Item $item){
 		$this->targetItem = clone $item;
+	}
+	
+	public function getFailures(){
+		return $this->failures;
+	}
+	
+	public function addFailure(){
+		$this->failures++;
 	}
 	
 	/**

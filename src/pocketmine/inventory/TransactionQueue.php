@@ -23,8 +23,14 @@ namespace pocketmine\inventory;
 
 interface TransactionQueue{
 	
-	function getCurrentTransactions();
+	function getTransactions();
+	
+	function getInventories();
+	
+	function isExecuting();
 	
 	function addTransaction(Transaction $transaction);
+	
+	function execute();
 	
 }

@@ -92,7 +92,7 @@ use pocketmine\inventory\EnchantInventory;
 use pocketmine\inventory\FurnaceInventory;
 use pocketmine\inventory\Inventory;
 use pocketmine\inventory\InventoryHolder;
-use pocketmine\inventory\OrderedTransactionGroup;
+//use pocketmine\inventory\OrderedTransactionGroup;
 use pocketmine\inventory\PlayerInventory;
 use pocketmine\inventory\ShapedRecipe;
 use pocketmine\inventory\ShapelessRecipe;
@@ -206,8 +206,12 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 	public $achievements = [];
 	public $lastCorrect;
 	
-	/** @var OrderedTransactionGroup */
-	protected $currentTransaction = null;
+	/** @var SimpleTransactionQueue */
+	protected $transactionQueue = null;
+	
+	//protected $currentTransaction = null;
+	
+	
 	public $craftingType = 0; //0 = 2x2 crafting, 1 = 3x3 crafting, 2 = stonecutter
 
 	protected $isCrafting = false;
@@ -2006,10 +2010,11 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				}
 			}
 			
-			if($this->currentTransaction !== null){
-				if($this->currentTransaction->execute() or $this->currentTransaction->hasExecuted()){
+			if($this->transactionQueue !== null){
+				$this->transactionQueue->execute();
+				/*if($this->transactionQueue->execute() or $this->currentTransaction->hasExecuted()){
 					$this->currentTransaction = null;
-				}
+				}*/
 			}
 		}
 
@@ -3416,7 +3421,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					break;
 				}
 				$this->craftingType = 0;
-				$this->currentTransaction = null;
+				//$this->currentTransaction = null;
 				if(isset($this->windowIndex[$packet->windowid])){
 					if($this->windowIndex[$packet->windowid] instanceof AnvilInventory){
 						$this->anvilItem = null;
@@ -3677,7 +3682,10 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					}
 					if($this->isCreative()){
 						if(Item::getCreativeItemIndex($packet->item) !== -1){
+							//This is bad. This will be done in the BaseTransaction anyway, all this will do is cause more bugs.
 							$this->inventory->setItem($packet->slot, $packet->item);
+							
+							
 							$this->inventory->setHotbarSlotIndex($packet->slot, $packet->slot); //links $hotbar[$packet->slot] to $slots[$packet->slot]
 						}
 					}
@@ -3712,7 +3720,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 
 					$transaction = new BaseTransaction($inv, $packet->slot, $inv->getItem($packet->slot), $packet->item);
 				}else{
-					//echo "something weird happened, ignoring\n";
+					echo "dropped an item?\n";
 					//break;
 					//Dropped an item?
 					$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);
@@ -3724,13 +3732,20 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					break;
 				}
 				
-				if($this->currentTransaction === null){
+				if($this->transactionQueue === null){
+					$this->transactionQueue = new SimpleTransactionQueue($this);
+				}
+				
+				echo "adding a transaction\n";
+				$this->transactionQueue->addTransaction($transaction);
+				
+				/*if($this->currentTransaction === null){
 					echo "creating a new transaction group\n";
 					$this->currentTransaction = new OrderedTransactionGroup($this);
 				}
 				//What happens if the transaction is already in progress when you add another one? Potential issue there
-				echo "adding a transaction\n";
-				$this->currentTransaction->addTransaction($transaction);
+				
+				$this->currentTransaction->addTransaction($transaction);*/
 				
 				
 				/*if($this->currentTransaction === null or $this->currentTransaction->getCreationTime() < (microtime(true) - 8)){

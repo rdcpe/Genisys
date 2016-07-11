@@ -29,17 +29,24 @@ class SimpleTransactionQueue implements TransactionQueue{
 	/** @var Player[] */
 	protected $player = null;
 	
-	/** @var Transaction[] */
-	protected $in = [];
+	/** @var \SplQueue */
+	protected $transactionQueue;
 	
-	/** @var Transaction[] */
-	protected $out = [];	
+	/** @var bool */
+	protected $isExecuting = false;
+	
+	/** @var float */
+	protected $lastExecution = -1;
+	
+	/** @var Inventory[] */	
+	protected $inventories = [];
 	
 	/**
 	 * @param Player $player
 	 */
 	public function __construct(Player $player = null){
 		$this->player = $player;
+		$this->transactionQueue = new \SplQueue();
 	}
 
 	/**
@@ -49,74 +56,137 @@ class SimpleTransactionQueue implements TransactionQueue{
 		return $this->player;
 	}
 	
-	public function getCurrentTransactions(){
-		return array_merge($this->out, $this->in);
+	/**
+	 * @return \SplQueue
+	 */
+	public function getTransactions(){
+		return $this->transactionQueue;
 	}
 	
-	//I don't like this function. TODO: Find a better way to do this.
-	public function compactTransactions(&$queue){
-		foreach($queue as $hash => $transaction){
-			foreach($queue as $hash2 => $transactionToCompare){
-				if($hash === $hash2){
-					//Comparing the object to itself
-					continue;
-				}elseif($transaction === $transactionToCompare){
-					//Two references to the same transaction object
-					unset($queue[$hash2]);
-					continue;
-				}elseif($transaction->getInventory() === $transactionToCompare->getInventory()
-					and $transaction->getSlot() === $transactionToCompare->getSlot()){
-					//Found a transaction that refers to the same slot in the same inventory
-					
-					//Take the source item from the older transaction
-					$sourceItem = ($transaction->getCreationTime() < $transactionToCompare->getCreationTime() ? $transaction->getSourceItem(): $transactionToCompare->getSourceItem());
-					//and the target from the newer one
-					$targetItem = ($transaction->getCreationTime() > $transactionToCompare->getCreationTime() ? $transaction->getTargetItem(): $transactionToCompare->getTargetItem());
-					
-					$compactTransaction = new BaseTransaction($transaction->getInventory(), $transaction->getSlot(), $sourceItem, $targetItem);
-					
-					unset($queue[$hash]);
-					unset($queue[$hash2]);
-					
-					$queue[spl_object_hash($compactTransaction)] = $compactTransaction;
-				}
-			}
-		}
+	/**
+	 * @return Inventory[]
+	 */
+	public function getInventories(){
+		return $this->inventories;
+	}
+	
+	/**
+	 * @return bool
+	 */
+	public function isExecuting(){
+		return $this->isExecuting;
 	}
 	
 	/**
 	 * @param Transaction $transaction
 	 * @return bool
 	 *
-	 * Add a transaction to the queue
-	 * Return true if the addition was successful, false if not.
+	 * Adds a transaction to the queue
+	 * Returns true if the addition was successful, false if not.
 	 */
 	public function addTransaction(Transaction $transaction){
-		
 		$change = $transaction->getChange();
-		if($change === null){
+		
+		if(@$change["in"] instanceof Item or @$change["out"] instanceof Item){
+			$this->transactionQueue->enqueue($transaction);
+			$this->inventories[] = $transaction->getInventory();
+			return true;
+		}else{
 			return false;
 		}
-		
-		if($change["in"] instanceof Item){
-			$this->in[spl_object_hash($transaction)] = $transaction;
+	}
+	
+	
+	/** 
+	 * @param Transaction 	$transaction
+	 * @param Transaction[] &$failed
+	 *
+	 * Handles a failed transaction
+	 */
+	private function handleFailure(Transaction $transaction, array &$failed){
+		$transaction->addFailure();
+		if($transaction->getFailures() > 2){
+			$failed[] = $transaction;
+		}else{
+			//Add the transaction to the back of the queue to be retried
+			$this->transactionQueue->enqueue($transaction);
 		}
-		if($change["out"] instanceof Item){
-			$this->out[spl_object_hash($transaction)] = $transaction;
-		}
-		
-		return true;
 	}
 	
 	/**
-	 * This function will be called at regular intervals
-	 * to allow transactions to stack and then be cleared.
+	 * @return Transaction[] $failed | bool
+	 *
+	 * Handles transaction execution
+	 * Returns an array of transactions which failed
 	 */
 	public function execute(){
-		if(count($this->in) === 0 and count($this->out) === 0){
-			//No waiting transactions, return
+		if($this->isExecuting()){
+			echo "execution already in progress\n";
+			return false;
+		}elseif(microtime(true) - $this->lastExecution < 0.2){
+			echo "last execution time less than 4 ticks ago\n";
 			return false;
 		}
-		//TODO: finish
+		echo "Starting queue execution\n";
+		
+		$failed = [];
+		
+		$this->isExecuting = true;
+		while(!$this->transactionQueue->isEmpty()){
+			$transaction = $this->transactionQueue->dequeue();
+			$change = $transaction->getChange();
+			if($change["out"] instanceof Item){
+				if($transaction->getInventory()->slotContains($transaction->getSlot(), $change["out"]) or $this->player->isCreative()){
+					//Allow adding nonexistent items to the crafting inventory in creative.
+					echo "out transaction executing\n";
+
+					$this->player->getCraftingInventory()->addItem($change["out"]);
+					$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
+				}else{
+					//Transaction unsuccessful
+					echo "out transaction failed\n";
+					
+					//Relocate the transaction to the end of the list
+					/*$transaction->addFailure();
+					if($transaction->getFailures() > 2){
+						$failed[] = $transaction;
+					}else{
+						//Add the transaction to the back of the queue to be retried
+						$this->transactionQueue->enqueue($transaction);
+					}*/
+					$this->handleFailure($transaction, $failed);
+					continue;
+				}
+			}
+			if($change["in"] instanceof Item){
+				if($this->player->getCraftingInventory()->contains($change["in"])){
+					echo "in transaction executing\n";
+					
+					$this->player->getCraftingInventory()->removeItem($change["in"]);
+					$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem());
+				}else{
+					//Transaction unsuccessful
+					echo "in transaction failed\n";
+					
+					//Relocate the transaction to the end of the list
+					/*$transaction->addFailure();
+					if($transaction->getFailures() > 2){
+						$failed[] = $transaction;
+					}else{
+						//Add the transaction to the back of the queue to be retried
+						$this->transactionQueue->enqueue($transaction);
+					}*/
+					$this->handleFailure($transaction, $failed);
+					continue;
+				}
+			}
+		}
+		$this->isExecuting = false;
+		echo "Finished queue execution\n";
+		//$this->transactionQueue = null;
+		$this->inventories = [];
+		$this->lastExecution = microtime(true);
+		$this->hasExecuted = true;
+		return $failed;
 	}
 }
