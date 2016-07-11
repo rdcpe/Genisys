@@ -41,6 +41,9 @@ class SimpleTransactionQueue implements TransactionQueue{
 	/** @var Inventory[] */	
 	protected $inventories = [];
 	
+	/** @var Transaction[] */
+	protected $failures = [];
+	
 	/**
 	 * @param Player $player
 	 */
@@ -105,12 +108,12 @@ class SimpleTransactionQueue implements TransactionQueue{
 	 */
 	private function handleFailure(Transaction $transaction, array &$failed){
 		$transaction->addFailure();
-		if($transaction->getFailures() > 2){
+		//if($transaction->getFailures() > 2){
 			$failed[] = $transaction;
-		}else{
+		/*}else{
 			//Add the transaction to the back of the queue to be retried
 			$this->transactionQueue->enqueue($transaction);
-		}
+		}*/
 	}
 	
 	/**
@@ -120,21 +123,31 @@ class SimpleTransactionQueue implements TransactionQueue{
 	 * Returns an array of transactions which failed
 	 */
 	public function execute(){
-		if($this->isExecuting()){
+		/*if($this->isExecuting()){
 			echo "execution already in progress\n";
 			return false;
-		}elseif(microtime(true) - $this->lastExecution < 0.2){
-			echo "last execution time less than 4 ticks ago\n";
+		}else*/if(microtime(true) - $this->lastExecution < 0.2){
+			//echo "last execution time less than 4 ticks ago\n";
 			return false;
 		}
-		echo "Starting queue execution\n";
+		//echo "Starting queue execution\n";
 		
 		$failed = [];
+		$completeFails = [];
 		
 		$this->isExecuting = true;
+		
+		foreach($this->failures as $index => $failure){
+			if($failure->getFailures() <= 2){
+				$this->transactionQueue->enqueue($failure);
+			}
+			unset($this->failures[$index]);
+		}
+		
 		while(!$this->transactionQueue->isEmpty()){
 			$transaction = $this->transactionQueue->dequeue();
 			$change = $transaction->getChange();
+			var_dump($change);
 			if($change["out"] instanceof Item){
 				if($transaction->getInventory()->slotContains($transaction->getSlot(), $change["out"]) or $this->player->isCreative()){
 					//Allow adding nonexistent items to the crafting inventory in creative.
@@ -182,11 +195,17 @@ class SimpleTransactionQueue implements TransactionQueue{
 			}
 		}
 		$this->isExecuting = false;
-		echo "Finished queue execution\n";
+		//echo "Finished queue execution\n";
 		//$this->transactionQueue = null;
+		foreach($this->inventories as $inventory){
+			$inventory->sendContents($inventory->getViewers());
+		}
+		
 		$this->inventories = [];
 		$this->lastExecution = microtime(true);
 		$this->hasExecuted = true;
-		return $failed;
+		
+		$this->failures = $failed;
+		//return $failed;
 	}
 }

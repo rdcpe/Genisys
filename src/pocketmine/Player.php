@@ -3675,8 +3675,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				if($packet->slot < 0){
 					break;
 				}
-
+				var_dump($packet);
 				if($packet->windowid === 0){ //Our inventory
+					echo "Transferring items in this inventory\n";
 					if($packet->slot >= $this->inventory->getSize()){
 						break;
 					}
@@ -3691,12 +3692,16 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					}
 					$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);
 				}elseif($packet->windowid === ContainerSetContentPacket::SPECIAL_ARMOR){ //Our armor
+					echo "Changing armour slots\n";
+					
 					if($packet->slot >= 4){
 						break;
 					}
 
 					$transaction = new BaseTransaction($this->inventory, $packet->slot + $this->inventory->getSize(), $this->inventory->getArmorItem($packet->slot), $packet->item);
 				}elseif(isset($this->windowIndex[$packet->windowid])){ //Other type of inventory window
+					echo "Transfer for other inventory type\n";
+					
 					$this->craftingType = 0;
 					$inv = $this->windowIndex[$packet->windowid];
 
@@ -3726,11 +3731,11 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);
 				}
 				
-				if($transaction->getSourceItem()->deepEquals($transaction->getTargetItem(), true, true, true)){ //No changes!
+				/*if($transaction->getSourceItem()->deepEquals($transaction->getTargetItem(), true, true, true)){ //No changes!
 					//No changes, just a local inventory update sent by the server
 					echo "ignoring slot change\n";
 					break;
-				}
+				}*/
 				
 				if($this->transactionQueue === null){
 					$this->transactionQueue = new SimpleTransactionQueue($this);
