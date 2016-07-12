@@ -3725,7 +3725,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 
 					$transaction = new BaseTransaction($inv, $packet->slot, $inv->getItem($packet->slot), $packet->item);
 				}else{
-					echo "dropped an item?\n";
+					echo "no window open; dropped an item?\n";
 					break;
 					//Dropped an item?
 					//$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);

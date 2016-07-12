@@ -138,8 +138,10 @@ class SimpleTransactionQueue implements TransactionQueue{
 		
 		$this->isExecuting = true;
 		
+		$allowedRetries = $this->transactionQueue->count();
+		
 		foreach($this->failures as $index => $failure){
-			if($failure->getFailures() <= 2){
+			if($failure->getFailures() <= $allowedRetries){ //hmm, this may be inaccurate
 				$this->transactionQueue->enqueue($failure);
 			}
 			unset($this->failures[$index]);
@@ -148,7 +150,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 		while(!$this->transactionQueue->isEmpty()){
 			$transaction = $this->transactionQueue->dequeue();
 			$change = $transaction->getChange();
-			var_dump($change);
+			//var_dump($change);
 			if($change["out"] instanceof Item){
 				if(($transaction->getInventory()->slotContains($transaction->getSlot(), $change["out"]) and $transaction->getInventory()->slotContains($transaction->getSlot(), $transaction->getSourceItem(), true)) or $this->player->isCreative()){
 					//Allow adding nonexistent items to the crafting inventory in creative.
@@ -159,7 +161,8 @@ class SimpleTransactionQueue implements TransactionQueue{
 				}else{
 					//Transaction unsuccessful
 					echo "out transaction failed\n";
-					
+					$transaction->addFailure();
+					$failed[] = $transaction;
 					//Relocate the transaction to the end of the list
 					/*$transaction->addFailure();
 					if($transaction->getFailures() > 2){
@@ -168,7 +171,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 						//Add the transaction to the back of the queue to be retried
 						$this->transactionQueue->enqueue($transaction);
 					}*/
-					$this->handleFailure($transaction, $failed);
+					//$this->handleFailure($transaction, $failed);
 					continue;
 				}
 			}
@@ -181,7 +184,8 @@ class SimpleTransactionQueue implements TransactionQueue{
 				}else{
 					//Transaction unsuccessful
 					echo "in transaction failed\n";
-					
+					$transaction->addFailure();
+					$failed[] = $transaction;
 					//Relocate the transaction to the end of the list
 					/*$transaction->addFailure();
 					if($transaction->getFailures() > 2){
@@ -190,7 +194,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 						//Add the transaction to the back of the queue to be retried
 						$this->transactionQueue->enqueue($transaction);
 					}*/
-					$this->handleFailure($transaction, $failed);
+					//$this->handleFailure($transaction, $failed);
 					continue;
 				}
 			}
