@@ -149,7 +149,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 			$change = $transaction->getChange();
 			var_dump($change);
 			if($change["out"] instanceof Item){
-				if($transaction->getInventory()->slotContains($transaction->getSlot(), $change["out"]) or $this->player->isCreative()){
+				if(($transaction->getInventory()->slotContains($transaction->getSlot(), $change["out"]) and $transaction->getInventory()->slotContains($transaction->getSlot(), $transaction->getSourceItem(), true)) or $this->player->isCreative()){
 					//Allow adding nonexistent items to the crafting inventory in creative.
 					echo "out transaction executing\n";
 
