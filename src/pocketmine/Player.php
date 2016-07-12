@@ -3675,21 +3675,21 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				if($packet->slot < 0){
 					break;
 				}
-				var_dump($packet);
+				//var_dump($packet);
 				if($packet->windowid === 0){ //Our inventory
 					echo "Transferring items in this inventory\n";
 					if($packet->slot >= $this->inventory->getSize()){
 						break;
 					}
-					if($this->isCreative()){
+					/*if($this->isCreative()){
 						if(Item::getCreativeItemIndex($packet->item) !== -1){
 							//This is bad. This will be done in the BaseTransaction anyway, all this will do is cause more bugs.
-							$this->inventory->setItem($packet->slot, $packet->item);
+							//$this->inventory->setItem($packet->slot, $packet->item);
 							
 							
 							$this->inventory->setHotbarSlotIndex($packet->slot, $packet->slot); //links $hotbar[$packet->slot] to $slots[$packet->slot]
 						}
-					}
+					}*/
 					$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);
 				}elseif($packet->windowid === ContainerSetContentPacket::SPECIAL_ARMOR){ //Our armor
 					echo "Changing armour slots\n";
@@ -3726,16 +3726,16 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$transaction = new BaseTransaction($inv, $packet->slot, $inv->getItem($packet->slot), $packet->item);
 				}else{
 					echo "dropped an item?\n";
-					//break;
+					break;
 					//Dropped an item?
-					$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);
+					//$transaction = new BaseTransaction($this->inventory, $packet->slot, $this->inventory->getItem($packet->slot), $packet->item);
 				}
 				
-				/*if($transaction->getSourceItem()->deepEquals($transaction->getTargetItem(), true, true, true)){ //No changes!
+				if($transaction->getSourceItem()->deepEquals($transaction->getTargetItem(), true, true, true)){ //No changes!
 					//No changes, just a local inventory update sent by the server
 					echo "ignoring slot change\n";
 					break;
-				}*/
+				}
 				
 				if($this->transactionQueue === null){
 					$this->transactionQueue = new SimpleTransactionQueue($this);

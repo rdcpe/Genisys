@@ -36,7 +36,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 	protected $isExecuting = false;
 	
 	/** @var float */
-	protected $lastExecution = -1;
+	protected $lastUpdate = -1;
 	
 	/** @var Inventory[] */	
 	protected $inventories = [];
@@ -93,6 +93,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 		if(@$change["in"] instanceof Item or @$change["out"] instanceof Item){
 			$this->transactionQueue->enqueue($transaction);
 			$this->inventories[] = $transaction->getInventory();
+			$this->lastUpdate = microtime(true);
 			return true;
 		}else{
 			return false;
@@ -126,8 +127,8 @@ class SimpleTransactionQueue implements TransactionQueue{
 		/*if($this->isExecuting()){
 			echo "execution already in progress\n";
 			return false;
-		}else*/if(microtime(true) - $this->lastExecution < 0.2){
-			//echo "last execution time less than 4 ticks ago\n";
+		}else*/if(microtime(true) - $this->lastUpdate < 1){
+			echo "last update time less than 20 ticks ago\n";
 			return false;
 		}
 		//echo "Starting queue execution\n";
