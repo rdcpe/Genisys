@@ -109,12 +109,12 @@ class SimpleTransactionQueue implements TransactionQueue{
 	 */
 	private function handleFailure(Transaction $transaction, array &$failed){
 		$transaction->addFailure();
-		//if($transaction->getFailures() > 2){
+		if($transaction->getFailures() > 2){
 			$failed[] = $transaction;
-		/*}else{
+		}else{
 			//Add the transaction to the back of the queue to be retried
 			$this->transactionQueue->enqueue($transaction);
-		}*/
+		}
 	}
 	
 	/**
@@ -134,18 +134,10 @@ class SimpleTransactionQueue implements TransactionQueue{
 		//echo "Starting queue execution\n";
 		
 		$failed = [];
-		$completeFails = [];
 		
 		$this->isExecuting = true;
 		
 		$allowedRetries = $this->transactionQueue->count();
-		
-		foreach($this->failures as $index => $failure){
-			if($failure->getFailures() <= $allowedRetries){ //hmm, this may be inaccurate
-				$this->transactionQueue->enqueue($failure);
-			}
-			unset($this->failures[$index]);
-		}
 		
 		while(!$this->transactionQueue->isEmpty()){
 			$transaction = $this->transactionQueue->dequeue();
@@ -161,8 +153,8 @@ class SimpleTransactionQueue implements TransactionQueue{
 				}else{
 					//Transaction unsuccessful
 					echo "out transaction failed\n";
-					$transaction->addFailure();
-					$failed[] = $transaction;
+					//$transaction->addFailure();
+					//$failed[] = $transaction;
 					//Relocate the transaction to the end of the list
 					/*$transaction->addFailure();
 					if($transaction->getFailures() > 2){
@@ -171,7 +163,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 						//Add the transaction to the back of the queue to be retried
 						$this->transactionQueue->enqueue($transaction);
 					}*/
-					//$this->handleFailure($transaction, $failed);
+					$this->handleFailure($transaction, $failed);
 					continue;
 				}
 			}
@@ -184,17 +176,17 @@ class SimpleTransactionQueue implements TransactionQueue{
 				}else{
 					//Transaction unsuccessful
 					echo "in transaction failed\n";
-					$transaction->addFailure();
+					/*$transaction->addFailure();
 					$failed[] = $transaction;
 					//Relocate the transaction to the end of the list
-					/*$transaction->addFailure();
+					$transaction->addFailure();
 					if($transaction->getFailures() > 2){
 						$failed[] = $transaction;
 					}else{
 						//Add the transaction to the back of the queue to be retried
 						$this->transactionQueue->enqueue($transaction);
 					}*/
-					//$this->handleFailure($transaction, $failed);
+					$this->handleFailure($transaction, $failed);
 					continue;
 				}
 			}
