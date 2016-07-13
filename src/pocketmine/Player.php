@@ -3313,19 +3313,23 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					//$this->craftingInventory->remove($droppedItem);
 					$replacementItem = null;					
 				}else{
-					//Something fails under here, breaking item drops on PE -_-
-					
 					//Crafting inventory doesn't contain the item we are trying to drop
 					//This means we're trying to drop our held item slot, or at least part
 					//of it.
 					$chosenSlot = clone $this->inventory->getItemInHand();
 					if(!$chosenSlot->deepEquals($packet->item)){
-						//Player tried to drop something that wasn't the same as their held item
-						//You can do this on PE, as you can drop items directly from the hotbar on PE
-						//without actually having to hold them.
-
-						//There's no foolproof way to do this. If there's multiple identical slots in the hotbar
-						//it will choose the first one.
+						/*
+						 * Player tried to drop something that wasn't the same as their held item
+						 * You can do this on PE, as you can drop items directly from the hotbar on PE
+						 * without actually having to hold them.
+						 *
+						 * There's no foolproof way to do this. If there's multiple identical slots in the hotbar
+						 * it will choose the first one.
+						 *
+						 * Actually, there _is_ a way to do this properly, but it requires DropItem packets to be
+						 * correctly paired with the relevant ContainerSetSlot packets when dropping items. I knew
+						 * there had to be _some_ way of doing it.
+						 */
 						
 						$chosenSlot = null;
 						foreach($this->inventory->getHotbar() as $index){
@@ -3374,13 +3378,18 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$this->inventory->sendSlot($slot, $this);
 					break;
 				}
+				/**
+				 * Allow this to be handled by the container set slot packet, will fix some bugs with PE
+				 * Pairing will be required at a later date to ensure that players cannot cheat,
+				 * or duplicate items on a bad network.
+				 */
+				//if($replacementItem !== null){
+				//	//Not sure this will cut it, may have to actually remove it
+				//	$this->inventory->setItemInHand($replacementItem);
+				//	//$this->inventory->remove($dropItem);
+				//}
 				
-				if($replacementItem !== null){
-					//Not sure this will cut it, may have to actually remove it
-					$this->inventory->setItemInHand($replacementItem);
-					//$this->inventory->remove($dropItem);
-				}
-
+	
 				//$this->inventory->setItemInHand(Item::get(Item::AIR, 0, 1));
 				$motion = $this->getDirectionVector()->multiply(0.4);
 
