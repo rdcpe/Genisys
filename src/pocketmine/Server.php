@@ -2121,7 +2121,7 @@ class Server{
 			}
 
 			$this->generateRecipeList();
-
+			$this->logger->warning("This build is from the Win10 Edition Beta development branch and is NOT intended for production use! Only use this build for testing purposes.");
 			$this->start();
 		}catch(\Throwable $e){
 			$this->exceptionHandler($e);
