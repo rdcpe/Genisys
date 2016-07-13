@@ -176,7 +176,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 				}
 			}
 			if($change["in"] instanceof Item){
-				if($this->player->getCraftingInventory()->contains($change["in"])){
+				if($this->player->getCraftingInventory()->contains($change["in"]) or $this->player->isCreative()){
 					echo "in transaction executing\n";
 					
 					$this->player->getCraftingInventory()->removeItem($change["in"]);
