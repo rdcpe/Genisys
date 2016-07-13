@@ -3453,6 +3453,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				//Drop the contents of the floating inventory
 				foreach($this->getCraftingInventory()->getContents() as $item){
 					$this->level->dropItem($this, $item);
+					$this->getCraftingInventory()->remove($item);
 				}
 				break;
 
