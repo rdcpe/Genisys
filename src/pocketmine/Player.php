@@ -3767,9 +3767,9 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$this->transactionQueue = new SimpleTransactionQueue($this);
 				}
 				
-				echo "adding a transaction\n";
+				//echo "adding a transaction\n";
 				$this->transactionQueue->addTransaction($transaction);
-				
+				echo "Added a transaction concerning slot number ".$packet->slot."\n";
 				/*if($this->currentTransaction === null){
 					echo "creating a new transaction group\n";
 					$this->currentTransaction = new OrderedTransactionGroup($this);
