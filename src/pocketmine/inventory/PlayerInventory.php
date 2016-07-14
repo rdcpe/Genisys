@@ -153,7 +153,7 @@ class PlayerInventory extends BaseInventory{
 				}
 			}
 
-			$this->setHotbarSlotIndex($itemIndex, $slot);
+			//$this->setHotbarSlotIndex($itemIndex, $slot);
 		}
 	}
 

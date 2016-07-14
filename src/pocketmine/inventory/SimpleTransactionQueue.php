@@ -198,9 +198,12 @@ class SimpleTransactionQueue implements TransactionQueue{
 		$this->isExecuting = false;
 		//echo "Finished queue execution\n";
 		//$this->transactionQueue = null;
-		foreach($this->inventories as $inventory){
-			$inventory->sendContents($inventory->getViewers());
+		foreach($failed as $f){
+			$f->getInventory()->sendSlot($f->getSlot, $f->getInventory()->getViewers());
 		}
+		/*foreach($this->inventories as $inventory){
+			$inventory->sendContents($inventory->getViewers());
+		}*/
 		
 		$this->inventories = [];
 		$this->lastExecution = microtime(true);
@@ -208,5 +211,6 @@ class SimpleTransactionQueue implements TransactionQueue{
 		
 		$this->failures = $failed;
 		//return $failed;
+		return true;
 	}
 }
