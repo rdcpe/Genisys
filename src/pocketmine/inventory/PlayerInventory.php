@@ -86,17 +86,24 @@ class PlayerInventory extends BaseInventory{
 	}
 
 	/**
-	 * @param int  $index
-	 * @param bool $send
+	 * @param int  $hotbarSlotIndex
+	 * @param bool $sendToHolder
+	 * @param int  $slotMapping
 	 *
-	 * Sets which hotbar slot the player is currently holding
+	 * Sets which hotbar slot the player is currently holding.
+	 * Allows slot remapping as specified by a MobEquipmentPacket. DO NOT CHANGE SLOT MAPPING IN PLUGINS!
+	 * This new implementation is fully compatible with older APIs.
 	 */
-	public function setHeldItemIndex($index, $send = true){
-		if($index >= 0 and $index < $this->getHotbarSize()){
-			$this->itemInHandIndex = $index;
-
-			if($send){
-				$this->sendHeldItem($this->getHolder()->getViewers());
+	public function setHeldItemIndex($hotbarSlotIndex, $sendToHolder = true, $slotMapping = null){
+		if(0 <= $hotbarSlotIndex and $hotbarSlotIndex < $this->getHotbarSize()){
+			$this->itemInHandIndex = $hotbarSlotIndex;
+			if($slotMapping !== null){
+				//Handle a hotbar slot mapping change (for PE)
+				$this->hotbar[$this->itemInHandIndex] = $slotMapping - $this->getHotbarSize();
+			}
+			$this->sendHeldItem($this->getHolder()->getViewers());
+			if($sendToHolder){
+				$this->sendHeldItem($this->getHolder());
 			}
 		}
 	}
