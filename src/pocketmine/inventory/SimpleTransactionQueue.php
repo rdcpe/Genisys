@@ -141,6 +141,10 @@ class SimpleTransactionQueue implements TransactionQueue{
 		
 		while(!$this->transactionQueue->isEmpty()){
 			$transaction = $this->transactionQueue->dequeue();
+			
+			//Quick hack for proof of concept. This will need fixing properly.
+			$transaction->setSourceItem($transaction->getInventory()->getItem($transaction->getSlot()));
+			
 			$change = $transaction->getChange();
 			//var_dump($change);
 			if($change["out"] instanceof Item){
