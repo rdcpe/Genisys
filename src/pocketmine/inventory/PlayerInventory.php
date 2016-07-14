@@ -52,31 +52,60 @@ class PlayerInventory extends BaseInventory{
 		parent::setSize($size + 4);
 		$this->sendContents($this->getViewers());
 	}
-
+	
+	/**
+	 * @param int $index
+	 *
+	 * @return int
+	 *
+	 * Returns the index of the inventory slot linked to the specified hotbar slot#
+	 */
 	public function getHotbarSlotIndex($index){
 		return ($index >= 0 and $index < $this->getHotbarSize()) ? $this->hotbar[$index] : -1;
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * Changes the linkage of the specified hotbar slot. This should never be done unless it is requested by the client.
+	 */
 	public function setHotbarSlotIndex($index, $slot){
+		trigger_error("Hotbar linkage should never be changed unless requested by the client", E_USER_DEPRECATED);
 		/*if ($index >= 0 and $index < $this->getHotbarSize() and $slot >= -1 and $slot < $this->getSize()) {
 			$this->hotbar[$index] = $slot;//calculate has been done by client
 		}*/
 	}
 
+	/**
+	 * @return int
+	 *
+	 * Returns the index of the inventory slot the player is currently holding
+	 */
 	public function getHeldItemIndex(){
 		return $this->itemInHandIndex;
 	}
 
-	public function setHeldItemIndex($index, $sendHeldItem = true){
+	/**
+	 * @param int  $index
+	 * @param bool $send
+	 *
+	 * Sets which hotbar slot the player is currently holding
+	 */
+	public function setHeldItemIndex($index, $send = true){
 		if($index >= 0 and $index < $this->getHotbarSize()){
 			$this->itemInHandIndex = $index;
 
-			if($sendHeldItem){
+			if($send){
 				$this->sendHeldItem($this->getHolder()->getViewers());
 			}
 		}
 	}
-
+	
+	/**
+	 * @return Item
+	 *
+	 * Returns the item the player is currently holding
+	 */
 	public function getItemInHand(){
 		$item = $this->getItem($this->getHeldItemSlot());
 		if($item instanceof Item){
@@ -90,34 +119,20 @@ class PlayerInventory extends BaseInventory{
 	 * @param Item $item
 	 *
 	 * @return bool
+	 *
+	 * Sets the item in the inventory slot the player is currently holding.
 	 */
 	public function setItemInHand(Item $item){
 		return $this->setItem($this->getHeldItemSlot(), $item);
 	}
 	
+	/**
+	 * @return int[]
+	 *
+	 * Returns an array of hotbar indices
+	 */
 	public function getHotbar(){
 		return $this->hotbar;
-	}
-	
-	
-	/**
-	 * @param int[] $indices
-	 *
-	 * Sets the hotbar slot indices to an array of supplied values.
-	 */
-	public function setHotbar(array $indices){
-		if(count($indices) < $this->getHotbarSize()){
-			throw new \InvalidArgumentException("Expecting an array with 9 items, got ".count($indexes));
-		}
-		foreach($indices as $position => $index){
-			if(!is_int($index)){
-				throw new \InvalidArgumentException("All parameters must be integers");
-			}
-			if($index < -1 or $index > $this->getHotbarSize()){
-				$index = -1;
-			}
-			$this->hotbar[$position] = $index;
-		}
 	}
 
 	public function getHeldItemSlot(){
