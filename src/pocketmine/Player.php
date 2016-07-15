@@ -2009,12 +2009,8 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$this->foodTick++;
 				}
 			}
-			
 			if($this->transactionQueue !== null){
 				$this->transactionQueue->execute();
-				/*if($this->transactionQueue->execute() or $this->currentTransaction->hasExecuted()){
-					$this->currentTransaction = null;
-				}*/
 			}
 		}
 
@@ -2564,6 +2560,8 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				/**
 				 * Handle hotbar slot remapping
 				 * This is the only time and place when hotbar mapping should ever be changed.
+				 * Changing hotbar slot mapping at will has been deprecated because it causes far too many
+				 * issues with Windows 10 Edition Beta.
 				 */
 				$this->inventory->setHeldItemIndex($packet->selectedSlot, false, $packet->slot);
 				
@@ -3303,7 +3301,8 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				}
 
 				if(($this->isCreative() and $this->server->limitedCreative)){
-					$this->inventory->sendContents($this);
+					//Sending contents here is utterly pointless.
+					//$this->inventory->sendContents($this);
 					break;
 				}
 				
@@ -3314,6 +3313,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					break;
 				}*/				
 				
+				//TODO: Throw out all this mess and handle it in transaction queue instead				
 				$replacementItem = Item::get(Item::AIR, 0, 1);
 				$droppedItem = null;
 				if($this->craftingInventory->contains($packet->item)){
@@ -3391,11 +3391,7 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 					$this->inventory->sendSlot($slot, $this);
 					break;
 				}
-				/**
-				 * Allow this to be handled by the container set slot packet, will fix some bugs with PE
-				 * Pairing will be required at a later date to ensure that players cannot cheat,
-				 * or duplicate items on a bad network.
-				 */
+
 				if($replacementItem !== null){
 					//Not sure this will cut it, may have to actually remove it
 					$this->inventory->setItem($chosenSlotIndex, $replacementItem);
@@ -3712,10 +3708,11 @@ class Player extends Human implements CommandSender, InventoryHolder, ChunkLoade
 				if($packet->slot < 0){
 					break;
 				}
-				//var_dump($packet);
+				var_dump($packet);
 				if($packet->windowid === 0){ //Our inventory
 					echo "Transferring items in this inventory\n";
 					if($packet->slot >= $this->inventory->getSize()){
+						
 						break;
 					}
 					/*if($this->isCreative()){
