@@ -84,10 +84,9 @@ class FurnaceInventory extends ContainerInventory{
 	public function setSmelting(Item $item){
 		return $this->setItem(0, $item);
 	}
-
-	public function onSlotChange($index, $before){
-		parent::onSlotChange($index, $before);
-
+	
+	public function setItem($index, Item $item, $send = true){
+		parent::setItem($index, $item, $send);
 		$this->getHolder()->scheduleUpdate();
 	}
 }
