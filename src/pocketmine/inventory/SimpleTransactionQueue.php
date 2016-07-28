@@ -130,15 +130,11 @@ class SimpleTransactionQueue implements TransactionQueue{
 	}
 	
 	/**
-	 * @return Transaction[] $failed | bool
+	 * @return bool
 	 *
-	 * Handles transaction execution
-	 * Returns an array of transactions which failed
+	 * Handles transaction queue execution
 	 */
 	public function execute(){
-		/*if(microtime(true) - $this->lastUpdate < 0.1){
-			return false;
-		}*/
 		
 		/** @var Transaction[] */
 		$failed = [];
@@ -184,9 +180,7 @@ class SimpleTransactionQueue implements TransactionQueue{
 
 						$this->player->getCraftingInventory()->addItem($change["out"]);
 						$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem(), false);
-						
-						$transaction->setSuccess();
-						$transaction->sendSlotUpdate($this->player);
+				
 					}else{
 						$this->handleFailure($transaction, $failed);
 						continue;
@@ -198,17 +192,14 @@ class SimpleTransactionQueue implements TransactionQueue{
 						$this->player->getCraftingInventory()->removeItem($change["in"]);
 						$transaction->getInventory()->setItem($transaction->getSlot(), $transaction->getTargetItem(), false);
 						
-						$transaction->setSuccess();
-						$transaction->sendSlotUpdate($this->player);
 					}else{
 						$this->handleFailure($transaction, $failed);
 						continue;
 					}
 				}
+				$transaction->setSuccess();
+				$transaction->sendSlotUpdate($this->player);				
 			}
-			
-			
-			
 		}
 		$this->isExecuting = false;
 
