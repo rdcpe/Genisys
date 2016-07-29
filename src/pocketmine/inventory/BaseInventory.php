@@ -141,7 +141,7 @@ abstract class BaseInventory implements Inventory{
 		if($index < 0 or $index >= $this->size){
 			return false;
 		}elseif($item->getId() === 0 or $item->getCount() <= 0){
-			return $this->clear($index);
+			return $this->clear($index, $send);
 		}
 
 		$holder = $this->getHolder();

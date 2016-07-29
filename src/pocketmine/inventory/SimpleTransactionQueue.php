@@ -92,12 +92,6 @@ class SimpleTransactionQueue implements TransactionQueue{
 	 * Returns true if the addition was successful, false if not.
 	 */
 	public function addTransaction(Transaction $transaction){
-		/*if($this->transactionQueue->count() >= self::MAX_QUEUE_LENGTH){
-			//Max pending transactions already queued.
-			echo "new transaction rejected\n";
-			$transaction->sendSlotUpdate($this->player);
-			return false;
-		}*/
 		
 		$change = $transaction->getChange();
 		if(@$change["in"] instanceof Item or @$change["out"] instanceof Item){
