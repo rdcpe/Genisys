@@ -228,17 +228,19 @@ class PlayerInventory extends BaseInventory{
 		}
 	}
 
-	public function onSlotChange($index, $before){
-		$holder = $this->getHolder();
-		if(!$holder instanceof Player or !$holder->spawned){
-			return;
-		}
+	public function onSlotChange($index, $before, $send = true){
+		if($send){
+			$holder = $this->getHolder();
+			if(!$holder instanceof Player or !$holder->spawned){
+				return;
+			}
 
-		parent::onSlotChange($index, $before);
+			parent::onSlotChange($index, $before);
 
-		if($index >= $this->getSize()){
-			$this->sendArmorSlot($index, $this->getViewers());
-			$this->sendArmorSlot($index, $this->getHolder()->getViewers());
+			if($index >= $this->getSize()){
+				$this->sendArmorSlot($index, $this->getViewers());
+				$this->sendArmorSlot($index, $this->getHolder()->getViewers());
+			}
 		}
 	}
 

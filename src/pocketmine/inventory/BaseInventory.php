@@ -428,8 +428,10 @@ abstract class BaseInventory implements Inventory{
 		unset($this->viewers[spl_object_hash($who)]);
 	}
 
-	public function onSlotChange($index, $before){
-		$this->sendSlot($index, $this->getViewers());
+	public function onSlotChange($index, $before, $send = true){
+		if($send){
+			$this->sendSlot($index, $this->getViewers());
+		}
 	}
 
 
